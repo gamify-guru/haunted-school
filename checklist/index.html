@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Чек-лист подготовки уроков с ИИ</title>
+<style>
+:root {
+  --emerald: #059669;
+  --emerald-dark: #047857;
+  --lavender: #8b5cf6;
+  --lavender-light: #c4b5fd;
+  --gray-light: #f3f4f6;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background: linear-gradient(135deg, #ecfdf5 0%, #f5f3ff 100%);
+  color: #1f2937;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.container {
+  max-width: 480px;
+  width: 100%;
+  background: #fff;
+  border-radius: 24px;
+  box-shadow: 0 10px 40px rgba(139, 92, 246, 0.12);
+  overflow: hidden;
+  position: relative;
+}
+.header {
+  background: linear-gradient(135deg, var(--emerald), var(--lavender));
+  color: white;
+  padding: 28px 24px;
+  text-align: center;
+}
+.header h1 { font-size: 1.45rem; font-weight: 700; margin-bottom: 6px; }
+.header p { opacity: 0.9; font-size: 0.95rem; }
+.content { padding: 24px; }
+.question { display: none; animation: fadeIn 0.4s ease; }
+.question.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+.question h2 { font-size: 1.15rem; margin-bottom: 16px; line-height: 1.4; }
+.options { display: flex; flex-direction: column; gap: 10px; }
+.option {
+  padding: 14px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 14px;
+  background: #fafafa;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.95rem;
+  user-select: none;
+}
+.option:hover { border-color: var(--lavender-light); background: #f5f3ff; }
+.option.selected {
+  border-color: var(--emerald);
+  background: #ecfdf5;
+  color: #065f46;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.15);
+}
+.nav { display: flex; justify-content: space-between; margin-top: 24px; gap: 12px; }
+button {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: opacity 0.2s;
+}
+button:active { transform: scale(0.98); }
+.btn-next {
+  background: var(--emerald);
+  color: white;
+  flex-grow: 1;
+}
+.btn-back {
+  background: transparent;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+}
+.btn-next:disabled { background: #d1d5db; cursor: not-allowed; opacity: 0.7; }
+.btn-copy {
+  background: var(--lavender);
+  color: white;
+  width: 100%;
+  margin-top: 12px;
+}
+.result { display: none; animation: fadeIn 0.5s ease; }
+.result.active { display: block; }
+.checklist {
+  background: #faf5ff;
+  border-radius: 16px;
+  padding: 20px;
+  margin: 16px 0;
+  border: 1px solid #f3e8ff;
+}
+.checklist ol { padding-left: 20px; }
+.checklist li { margin-bottom: 14px; line-height: 1.5; color: #374151; }
+.checklist strong { color: var(--emerald-dark); }
+.progress {
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--emerald), var(--lavender));
+  width: 0%;
+  transition: width 0.3s ease;
+}
+.note { font-size: 0.85rem; color: #6b7280; margin-top: 12px; text-align: center; }
+.personal { 
+  background: #ecfdf5; 
+  border-left: 4px solid var(--emerald);
+  border-radius: 4px; 
+  padding: 12px 14px; 
+  margin-bottom: 16px; 
+  font-size: 0.9rem;
+  color: #064e3b;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Чек-лист на вечер</h1>
+    <p>Как собрать уроки с ИИ за 90 минут</p>
+  </div>
+  <div class="content">
+    <div class="progress"><div class="progress-bar" id="progress"></div></div>
+
+    <!-- Вопрос 1 -->
+    <div class="question active" data-step="1">
+      <h2>1. С чего ты обычно начинаешь готовить урок?</h2>
+      <div class="options">
+        <div class="option" data-value="content">С темы или параграфа учебника</div>
+        <div class="option" data-value="quest">С идеи квеста или сюжета</div>
+        <div class="option" data-value="goal">С того, что ученик сможет сделать</div>
+      </div>
+    </div>
+
+    <!-- Вопрос 2 -->
+    <div class="question" data-step="2">
+      <h2>2. Что для тебя важнее в итоговом уроке?</h2>
+      <div class="options">
+        <div class="option" data-value="pretty">Красивый сюжет и оформление</div>
+        <div class="option" data-value="action">Понятное действие ученика</div>
+        <div class="option" data-value="emotion">Яркая эмоция в ключевой точке</div>
+      </div>
+    </div>
+
+    <!-- Вопрос 3 -->
+    <div class="question" data-step="3">
+      <h2>3. Сколько времени есть на подготовку сегодня?</h2>
+      <div class="options">
+        <div class="option" data-value="little">Меньше часа (аврал)</div>
+        <div class="option" data-value="medium">1–1,5 часа (штатно)</div>
+        <div class="option" data-value="much">Больше двух часов (с запасом)</div>
+      </div>
+    </div>
+
+    <!-- Вопрос 4 -->
+    <div class="question" data-step="4">
+      <h2>4. Что ты чаще вырезаешь в последний момент?</h2>
+      <div class="options">
+        <div class="option" data-value="story">Лишний сюжет и героев</div>
+        <div class="option" data-value="details">Мелкие детали оформления</div>
+        <div class="option" data-value="nothing">Почти ничего — жалко труды</div>
+      </div>
+    </div>
+
+    <div class="nav">
+      <button class="btn-back" id="backBtn" style="display:none">← Назад</button>
+      <button class="btn-next" id="nextBtn" disabled>Дальше</button>
+    </div>
+
+    <div class="result" id="result">
+      <h2 style="margin-bottom: 8px;">Твой план действий</h2>
+      <div class="personal" id="personalNote"></div>
+      <div class="checklist" id="checklistBox"></div>
+      <button class="btn-copy" onclick="copyChecklist()">Скопировать текст</button>
+      <p class="note">Готово? Сохрани в заметки или отправь себе в Telegram.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const questions = document.querySelectorAll('.question');
+const nextBtn = document.getElementById('nextBtn');
+const backBtn = document.getElementById('backBtn');
+const progress = document.getElementById('progress');
+let current = 0;
+const answers = {};
+
+function updateProgress() {
+  const percent = ((current) / questions.length * 100);
+  progress.style.width = percent + '%';
+}
+
+// Обработка клика по вариантам
+document.querySelectorAll('.option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    const parent = opt.closest('.question');
+    parent.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+    opt.classList.add('selected');
+    
+    // Сохраняем ответ
+    answers[parent.dataset.step] = opt.dataset.value;
+    nextBtn.disabled = false;
+  });
+});
+
+// Кнопка "Дальше"
+nextBtn.addEventListener('click', () => {
+  if (current < questions.length - 1) {
+    questions[current].classList.remove('active');
+    current++;
+    questions[current].classList.add('active');
+    
+    // Проверяем, был ли уже дан ответ на текущем шаге (при возврате назад)
+    const currentStepKey = (current + 1).toString();
+    nextBtn.disabled = !answers[currentStepKey];
+    
+    backBtn.style.display = 'block';
+    updateProgress();
+  } else {
+    finishQuiz();
+  }
+});
+
+// Кнопка "Назад"
+backBtn.addEventListener('click', () => {
+  if (current > 0) {
+    questions[current].classList.remove('active');
+    current--;
+    questions[current].classList.add('active');
+    
+    if (current === 0) backBtn.style.display = 'none';
+    
+    // Восстанавливаем состояние кнопки
+    const currentStepKey = (current + 1).toString();
+    nextBtn.disabled = !answers[currentStepKey];
+    
+    updateProgress();
+  }
+});
+
+function finishQuiz() {
+  questions[current].classList.remove('active');
+  document.querySelector('.nav').style.display = 'none';
+  showResult();
+  progress.style.width = '100%';
+}
+
+function showResult() {
+  const start = answers['1'];
+  const priority = answers['2'];
+  const time = answers['3'];
+  const cut = answers['4'];
+
+  let note = '';
+  // Базовые пункты чек-листа
+  let items = [
+    '<li><strong>Цель в действии.</strong> Напиши: «После урока ученик сможет ______ перед ______».</li>',
+    '<li><strong>Механика, а не картинка.</strong> Определи, что конкретно делает ученик руками/головой.</li>',
+    '<li><strong>Пик эмоции.</strong> Зафиксируй момент «Ах вот оно что» или «Я это собрал сам».</li>',
+    '<li><strong>Шаблон, а не мир с нуля.</strong> Возьми готовую рамку презентации/документа.</li>',
+    '<li><strong>Три варианта от ИИ.</strong> Попроси три разные формулировки задания. Выбери лучшую.</li>',
+    '<li><strong>Вырезать половину.</strong> Убери всё, что не работает на главную цель.</li>'
+  ];
+
+  // Логика персонализации
+  if (start === 'content') {
+    note = '💡 Ты часто начинаешь с темы. Сегодня попробуй сначала написать цель действия — и только потом открывай учебник.';
+    items[0] = '<li><strong>Стоп-кран.</strong> Не открывай параграф, пока не напишешь цель действия ученика.</li>';
+  } else if (start === 'quest') {
+    note = '💡 Ты любишь сюжеты. Сначала зафиксируй сухое действие ученика — сказку добавишь потом.';
+    items[0] = '<li><strong>Сначала скелет.</strong> Напиши действие ученика до того, как придумаешь героя.</li>';
+  } else {
+    note = '💡 Ты уже начинаешь с цели — супер. Главное сейчас — не увязнуть в деталях.';
+  }
+
+  if (priority === 'pretty') {
+    items[5] = '<li><strong>Жесткая редакция.</strong> Красивый сюжет оставляем, только если он не мешает действию.</li>';
+  } else if (priority === 'emotion') {
+    items[2] = '<li><strong>Эмоциональный якорь.</strong> Продумай одну шутку или эффект, который вызовет «Вау».</li>';
+  }
+
+  if (time === 'little') {
+    note += ' ⏳ Времени мало: делай только цель, одну механику и прогон через ИИ. Остальное режь.';
+    items.splice(3, 1); // Удаляем пункт про шаблоны для экономии места
+  } 
+
+  if (cut === 'nothing') {
+    items[items.length-1] = '<li><strong>Вырезать половину (обязательно).</strong> Даже если жалко — убери лишнее.</li>';
+  }
+
+  document.getElementById('personalNote').textContent = note;
+  document.getElementById('checklistBox').innerHTML = '<ol>' + items.join('') + '</ol>';
+  document.getElementById('result').classList.add('active');
+}
+
+function copyChecklist() {
+  const note = document.getElementById('personalNote').textContent;
+  // Получаем чистый текст из HTML списка
+  const listItems = document.querySelectorAll('#checklistBox li');
+  let listText = '';
+  listItems.forEach((item, index) => {
+    listText += `${index + 1}. ${item.innerText}\n`;
+  });
+  
+  const text = `✅ Чек-лист подготовки к уроку\n\n${note}\n\n${listText}`;
+  
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector('.btn-copy');
+    const originalText = btn.textContent;
+    btn.textContent = 'Скопировано!';
+    btn.style.background = '#059669';
+    setTimeout(() => {
+      btn.textContent = originalText;
+      btn.style.background = '';
+    }, 2000);
+  }).catch(err => {
+    console.error('Ошибка копирования', err);
+  });
+}
+
+updateProgress();
+</script>
+</body>
+</html>
