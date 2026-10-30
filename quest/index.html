@@ -452,7 +452,7 @@ var KEY="hs-quest-v1";
 var WORD="МОТИВАЦИЯ";
 var state=load();
 /* Анонимный счётчик: без cookies и личных данных, по одному разу на браузер. Если сервис недоступен — квест работает как обычно. */
-var STAT_NS="gamify-guru-haunted-quest-test",STAT_API="https://abacus.jasoncameron.dev/hit/",STAT_MEM={};
+var STAT_NS="gamify-guru-haunted-quest",STAT_API="https://abacus.jasoncameron.dev/hit/",STAT_MEM={};
 function stat(ev){try{
   if(/[?&]nocount\b/.test(location.search)){try{localStorage.setItem("hs-nocount","1");}catch(e){}}
   var off=false;try{off=localStorage.getItem("hs-nocount")==="1";}catch(e){}
