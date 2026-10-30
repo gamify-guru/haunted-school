@@ -436,7 +436,7 @@ main{position:relative;z-index:1}
   <div class="cta">
     <p>🕯️ Если квест вам понравился, заглядывайте в мой канал <b>«Геймификация без фантика»</b>. Там я делюсь механиками, шаблонами и интерактивами для учителей любых предметов — без лишней мишуры.</p>
     <a class="btn wide" href="https://t.me/game_kwest" target="_blank" rel="noopener">✈️ Канал в Telegram</a>
-    <p class="soft">А если захочется придумать такую игру под свой урок — у меня для вас есть ещё один секретный конверт ✉️ Внутри одно задание: превратить скучную тему в сценарий эмоции и получить готовый запрос для ИИ. Бесплатно и без кода. <a href="https://gamify-guru.github.io/haunted-school/konvert0/" target="_blank" rel="noopener">Открыть Конверт №0 →</a></p>
+    <p class="soft">А если захочется придумать такую игру под свой урок — у меня для вас есть ещё один секретный конверт ✉️ Внутри одно задание: превратить скучную тему в сценарий эмоции и получить готовый запрос для ИИ. Бесплатно и без кода. <a id="konvertLink" href="https://gamify-guru.github.io/haunted-school/konvert0/" target="_blank" rel="noopener">Открыть Конверт №0 →</a></p>
   </div>
   <div class="row" id="replayRow" style="justify-content:center">
     <button class="btn ghost small" id="replayBtn">↺ Пройти квест заново</button>
@@ -451,6 +451,18 @@ main{position:relative;z-index:1}
 var KEY="hs-quest-v1";
 var WORD="МОТИВАЦИЯ";
 var state=load();
+/* Анонимный счётчик: без cookies и личных данных, по одному разу на браузер. Если сервис недоступен — квест работает как обычно. */
+var STAT_NS="gamify-guru-haunted-quest-test",STAT_API="https://abacus.jasoncameron.dev/hit/",STAT_MEM={};
+function stat(ev){try{
+  if(/[?&]nocount\b/.test(location.search)){try{localStorage.setItem("hs-nocount","1");}catch(e){}}
+  var off=false;try{off=localStorage.getItem("hs-nocount")==="1";}catch(e){}
+  if(off)return;
+  var f="hs-stat-"+ev;if(STAT_MEM[f])return;STAT_MEM[f]=1;
+  try{if(localStorage.getItem(f))return;localStorage.setItem(f,"1");}catch(e){}
+  var u=STAT_API+STAT_NS+"/"+ev;
+  if(window.fetch){fetch(u,{method:"GET",mode:"cors",credentials:"omit",cache:"no-store",keepalive:true,referrerPolicy:"no-referrer"}).catch(function(){});}
+  else{var i=new Image();i.referrerPolicy="no-referrer";i.src=u;}
+}catch(e){}}
 function load(){try{var s=JSON.parse(localStorage.getItem(KEY));if(s&&s.solved)return s;}catch(e){}return {started:false,cur:0,solved:[],opened:false,sound:false};}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
 function $(s,r){return (r||document).querySelector(s);}
@@ -832,7 +844,7 @@ function renderFinal(){
 function openChest(){
   fh("МОТИВАЦИЯ! Замок щёлкнул…",true);
   $("#chest").classList.add("open");sfxOk();sparkles($("#chest"));
-  state.opened=true;save();
+  state.opened=true;save();stat("finished");
   setTimeout(function(){sparkles($("#chest"));},500);
   setTimeout(function(){show("gift");renderProgress();toast("🎁 Подарок ваш!");},1900);
 }
@@ -853,14 +865,16 @@ function copyText(t){
   else fallbackCopy(t);
 }
 $("#dlTxt").addEventListener("click",function(){
+  stat("gift");
   var blob=new Blob(["\ufeff"+giftText()],{type:"text/plain;charset=utf-8"});
   var a=el("a",{href:URL.createObjectURL(blob),download:"Айра_Хэллоуин-урок_за_20_минут.txt"});document.body.appendChild(a);a.click();
   setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},1500);
   toast("Файл скачивается ⬇️ Если не вышло — нажмите «Скопировать всё»");
 });
-$("#printBtn").addEventListener("click",function(){window.print();});
-$("#copyAll").addEventListener("click",function(){copyText(giftText());});
-document.querySelectorAll("[data-copy]").forEach(function(b){b.addEventListener("click",function(){copyText($("#"+b.getAttribute("data-copy")).textContent);});});
+$("#printBtn").addEventListener("click",function(){stat("gift");window.print();});
+$("#copyAll").addEventListener("click",function(){stat("gift");copyText(giftText());});
+try{$("#konvertLink").addEventListener("click",function(){stat("konvert");});}catch(e){}
+document.querySelectorAll("[data-copy]").forEach(function(b){b.addEventListener("click",function(){stat("gift");copyText($("#"+b.getAttribute("data-copy")).textContent);});});
 
 function updSound(){$("#soundBtn").textContent=state.sound?"🔊":"🔇";}
 $("#soundBtn").addEventListener("click",function(){state.sound=!state.sound;save();updSound();if(state.sound)sfxOk();toast(state.sound?"Звук включён":"Звук выключен");});
@@ -868,8 +882,9 @@ function restart(){if(!confirm("Начать квест заново? Пройд
   var snd=state.sound;state={started:false,cur:0,solved:[],opened:false,sound:snd};save();$("#chest").classList.remove("open");$("#startBtn").textContent="🕯️ Войти в школу";route();}
 $("#restartBtn").addEventListener("click",restart);
 $("#replayBtn").addEventListener("click",restart);
-$("#startBtn").addEventListener("click",function(){state.started=true;save();sfxOk();route();});
+$("#startBtn").addEventListener("click",function(){state.started=true;save();stat("started");sfxOk();route();});
 updSound();
+stat("opened");
 if(state.started){$("#startBtn").textContent=state.opened?"🎁 Открыть подарок":"🕯️ Продолжить квест";var st=state.started;state.started=false;route();state.started=st;}
 else route();
 })();

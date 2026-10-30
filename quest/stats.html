@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Статистика квеста — Побег из заколдованной школы</title>
+<meta name="theme-color" content="#1a0f3e">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E📊%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lobster&family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#140b30;--bg2:#22124d;--card:#2a1760;--violet:#8b5cf6;--lilac:#c4b5fd;--orange:#ff8a1f;--orange2:#ffb347;--gold:#ffd166;--text:#f5efff;--muted:#c9bfe8;--ok:#7ee0a8;--r:18px}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:Rubik,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:var(--text);background:var(--bg);
+  background-image:radial-gradient(ellipse at 20% -10%,rgba(139,92,246,.35),transparent 55%),radial-gradient(ellipse at 100% 30%,rgba(255,138,31,.12),transparent 45%);
+  background-attachment:fixed;min-height:100vh;line-height:1.45}
+main{max-width:640px;margin:0 auto;padding:22px 16px 40px}
+h1{font-family:Lobster,cursive;font-weight:400;font-size:34px;margin:6px 0 4px;color:var(--gold);text-shadow:0 0 18px rgba(255,138,31,.35)}
+.sub{color:var(--muted);margin:0 0 18px}
+.card{background:linear-gradient(170deg,var(--card),var(--bg2));border-radius:var(--r);padding:14px 16px;margin:10px 0;box-shadow:0 0 0 1px rgba(196,181,253,.16);display:flex;align-items:center;gap:12px}
+.card .ic{font-size:28px;width:40px;text-align:center}
+.card .lbl{flex:1}
+.card .lbl b{display:block;font-size:16px}
+.card .lbl small{color:var(--muted);font-size:13px}
+.card .num{font-size:30px;font-weight:700;color:var(--orange2);min-width:64px;text-align:right}
+h2{font-size:20px;margin:22px 0 8px;color:var(--lilac)}
+.conv{background:rgba(42,23,96,.6);border-radius:var(--r);padding:6px 14px;box-shadow:0 0 0 1px rgba(196,181,253,.12)}
+.conv div{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid rgba(196,181,253,.12)}
+.conv div:last-child{border-bottom:0}
+.conv span:last-child{font-weight:700;color:var(--ok);white-space:nowrap}
+.btn{display:inline-block;border:0;cursor:pointer;font:inherit;font-weight:700;font-size:17px;color:#1a0f3e;background:linear-gradient(180deg,var(--orange2),var(--orange));border-radius:14px;padding:13px 20px;box-shadow:0 6px 18px rgba(255,138,31,.3);width:100%;margin-top:18px}
+.btn:disabled{opacity:.6;cursor:wait}
+.meta{color:var(--muted);font-size:13px;text-align:center;margin-top:10px}
+.err{color:#ffb4b4}
+</style>
+</head>
+<body>
+<main>
+  <h1>🎃 Статистика квеста</h1>
+  <p class="sub">«Побег из заколдованной школы». Анонимные счётчики: каждый браузер считается один раз.</p>
+
+  <div id="cards"></div>
+
+  <h2>Конверсия</h2>
+  <div class="conv" id="conv"></div>
+
+  <button class="btn" id="refresh">🔄 Обновить</button>
+  <p class="meta" id="meta">Загружаю…</p>
+</main>
+<script>
+(function(){
+"use strict";
+var NS="gamify-guru-haunted-quest-test";
+var API="https://abacus.jasoncameron.dev/get/";
+var EV=[
+  {k:"opened",ic:"👀",t:"Открыли квест",d:"загрузили страницу"},
+  {k:"started",ic:"🕯️",t:"Начали",d:"нажали «Войти в школу»"},
+  {k:"finished",ic:"🗝️",t:"Дошли до финала",d:"собрали слово и открыли сундук"},
+  {k:"gift",ic:"🎁",t:"Забрали подарок",d:"скачали, скопировали или распечатали"},
+  {k:"konvert",ic:"✉️",t:"Перешли в Конверт №0",d:"нажали ссылку на конверт"}
+];
+var CONV=[
+  ["Начали из открывших","started","opened"],
+  ["Дошли до финала из начавших","finished","started"],
+  ["Дошли до финала из открывших","finished","opened"],
+  ["Забрали подарок из дошедших до финала","gift","finished"],
+  ["Перешли в Конверт №0 из дошедших до финала","konvert","finished"]
+];
+function $(s){return document.querySelector(s);}
+function fmt(n){return n==null?"—":String(n).replace(/\B(?=(\d{3})+(?!\d))/g," ");}
+function pct(a,b){if(a==null||b==null)return "—";if(!b)return "0%";return (Math.round(a/b*1000)/10).toString().replace(".",",")+"%";}
+function getOne(k){
+  return fetch(API+NS+"/"+k+"?t="+Date.now(),{credentials:"omit",cache:"no-store"}).then(function(r){
+    if(r.status===404)return 0;
+    if(!r.ok)throw new Error("HTTP "+r.status);
+    return r.json().then(function(j){return typeof j.value==="number"&&j.value>=0?j.value:0;});
+  });
+}
+function render(v){
+  $("#cards").innerHTML=EV.map(function(e){return '<div class="card"><div class="ic">'+e.ic+'</div><div class="lbl"><b>'+e.t+'</b><small>'+e.d+'</small></div><div class="num">'+fmt(v[e.k])+'</div></div>';}).join("");
+  $("#conv").innerHTML=CONV.map(function(c){return '<div><span>'+c[0]+'</span><span>'+pct(v[c[1]],v[c[2]])+'</span></div>';}).join("");
+}
+function load(){
+  var b=$("#refresh");b.disabled=true;$("#meta").textContent="Загружаю…";$("#meta").className="meta";
+  var v={},failed=0;
+  Promise.all(EV.map(function(e){return getOne(e.k).then(function(n){v[e.k]=n;},function(){v[e.k]=null;failed++;});})).then(function(){
+    render(v);b.disabled=false;
+    var t=new Date().toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+    if(failed){$("#meta").textContent="Не удалось загрузить часть данных ("+failed+" из "+EV.length+"). Возможно, мешает блокировщик рекламы — попробуйте ещё раз. "+t;$("#meta").className="meta err";}
+    else $("#meta").textContent="Обновлено в "+t;
+  });
+}
+render({});
+$("#refresh").addEventListener("click",load);
+load();
+})();
+</script>
+</body>
+</html>
